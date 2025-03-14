@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        margin: unset;
+        background-color: black;
+        color: white;
+        text-align: center;
+        font-size: 6rem;
+      }
+
+      .pappakello {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        min-height: 100dvh;
+        overflow-wrap: anywhere;
+      }
+
+      .pappakello span {
+        margin: 16px;
+      }
+
+      .fullscreen {
+        position: absolute;
+        top: 0px;
+        right: 0px;
+      }
+
+      .fullscreen > button {
+        display: flex;
+        font-size: 0.5em;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="fullscreen">
+      <button>
+        Koko näytön tila
+      </button>
+    </div>
+    <div class="pappakello">
+      <span id="clock">
+      </span>
+      <span id="day">
+      </span>
+      <span id="time-of-day">
+      </span>
+      <span id="date">
+      </span>
+    </div>
+    <script>
+
+      let wl = null;
+      const fsBtn = document.querySelector(".fullscreen > button");
+
+      addEventListener("fullscreenchange", () => {
+        if (document.fullscreenElement === null) {
+          wl.release().then(() => {
+            wl = null;
+            fsBtn.style.display = "block";
+          });
+        }
+      });
+
+      const toggleFs = async () => {
+        wl = await navigator.wakeLock.request("screen");
+        await document.body.requestFullscreen();
+        fsBtn.style.display = "none";
+
+      };
+
+      fsBtn.addEventListener("click", toggleFs);
+
+      const tds = [0, 6, 12, 18];
+      const labels = ["YÖ", "AAMU", "PÄIVÄ", "ILTA"];
+      const timeOfDay = (d) => {
+        const now = d.getHours();
+        let curTdI = tds.findIndex(t => now < t);
+        if (curTdI === -1) {
+          curTdI = tds.length;
+        }
+        return labels[curTdI - 1];
+      };
+
+      const time = (d) => 
+        new Intl.DateTimeFormat(
+          "fi-FI",
+          {
+            hour: "numeric",
+            minute: "numeric",
+            timeZone: "Europe/Helsinki",
+            hour12: false
+          }
+        ).format(d);
+
+      const day = (d) => 
+        new Intl.DateTimeFormat("fi-Fi", {
+          weekday: "long"
+        }).format(d).toUpperCase();
+
+      const date = (d) => 
+        new Intl.DateTimeFormat("fi-FI", {
+          year: "numeric",
+          month: "long",
+          day: "numeric"
+        }).format(d);
+
+      const clock = document.querySelector("#clock");
+      const todE = document.querySelector("#time-of-day");
+      const dayE = document.querySelector("#day");
+      const dateE = document.querySelector("#date");
+
+      const update = (d) => {
+        todE.textContent = timeOfDay(d);
+        clock.textContent = time(d);
+        dayE.textContent = day(d);
+        dateE.textContent = date(d);
+      };
+
+      setInterval(() => {
+        update(new Date());
+      }, 1000);
+
+      update(new Date());
+
+    </script>
+  </body>
+</html>
